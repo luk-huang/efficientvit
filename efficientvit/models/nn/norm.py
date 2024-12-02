@@ -3,16 +3,7 @@ from typing import Optional
 import torch
 import torch.nn as nn
 from torch.nn.modules.batchnorm import _BatchNorm
-
-# Allows Gradio Web Server To Run without Triton
-try:
-    from efficientvit.models.nn.triton_rms_norm import TritonRMSNorm2dFunc
-    TRITON_AVAILABLE = True
-except ImportError:
-    TRITON_AVAILABLE = False
-    print("Triton is not available. Skipping Triton-based RMS normalization.")
-
-
+from efficientvit.models.nn.triton_rms_norm import TritonRMSNorm2dFunc
 from efficientvit.models.utils import build_kwargs_from_config
 
 __all__ = ["LayerNorm2d", "TritonRMSNorm2d", "build_norm", "reset_bn", "set_norm_eps"]
@@ -27,17 +18,9 @@ class LayerNorm2d(nn.LayerNorm):
         return out
 
 
-# Bypass defining TritonRMSNorm2d if Triton unavailable for Gradio Web Server Use
-if TRITON_AVAILABLE:
-    class TritonRMSNorm2d(nn.LayerNorm):
-        def forward(self, x: torch.Tensor) -> torch.Tensor:
-            return TritonRMSNorm2dFunc.apply(x, self.weight, self.bias, self.eps)
-else:
-    class TritonRMSNorm2d(nn.LayerNorm):
-        def forward(self, x: torch.Tensor) -> torch.Tensor:
-            # Approximate functionality using LayerNorm
-            norm = torch.sqrt(torch.mean(x**2, dim=1, keepdim=True) + self.eps)
-            return (x / norm) * self.weight.unsqueeze(0).unsqueeze(2) + self.bias.unsqueeze(0).unsqueeze(2)
+class TritonRMSNorm2d(nn.LayerNorm):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return TritonRMSNorm2dFunc.apply(x, self.weight, self.bias, self.eps)
 
 # register normalization function here
 REGISTERED_NORM_DICT: dict[str, type] = {

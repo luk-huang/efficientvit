@@ -14,7 +14,17 @@ tmp/
 assets/checkpoints/
 assets/data/
 assets/export_models/
+dataset
 
 applications/efficientvit_gazesam/models/pytorch
 applications/efficientvit_gazesam/models/onnx
 applications/efficientvit_gazesam/models/tensorrt
+
+frp/
+applications/efficientvit_sam/throughput_efficientvit_sam_trt.py\
+efficientvit_sam_profile.nsys-rep
+efficientvit_sam_profile.sqlite
+nv-tensorrt-local-repo-ubuntu2404-10.6.0-cuda-12.6_1.0-1_amd64.deb
+tensorrt-10.6-ga.deb
+torch-1.13.0a0+340c4120.nv22.06-cp38-cp38-linux_aarch64.whl
+torch-2.4.0a0+07cecf4168.nv24.05.14710581-cp310-cp310-linux_aarch64.whl

@@ -67,14 +67,19 @@ def get_available_models(runtime):
     elif runtime == TENSORRT:
         required_suffixes = [
             "_encoder.engine",
-            "_point_decoder.engine",
-            "_box_decoder.engine",
-            "_full_img_decoder.engine",
+            "_decoder.engine"
         ]
 
+    #  Not Using for the moment:
+    #   "_point_decoder.engine",
+    #    "_box_decoder.engine",
+    #   "_full_img_decoder.engine",
+    
     # ensure each model type has requisite set of runtime-specific model files needed for inference
     valid_model_type = lambda model: all([f"{model}{suffix}" in model_files for suffix in required_suffixes])
     available_models = set([model for model in model_types if valid_model_type(model)])
+
+    print(available_models)
 
     # models listed in decreasing accuracy order
     return sorted(available_models, key=lambda model: model_priority[model])

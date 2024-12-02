@@ -65,9 +65,9 @@ class TRTEfficientViTSamPredictor:
 
         self.original_size = image.shape[:2]
 
-        if self.model_type in ["l0", "l1", "l2"]:
+        if self.model_type in ["efficientvit-sam-l0", "efficientvit-sam-l1", "efficientvit-sam-l2"]:
             img = preprocess(image, 512, "cuda")
-        elif self.model_type in ["xl0", "xl1"]:
+        elif self.model_type in ["efficientvit-sam-xl0", "efficientvit-sam-xl1"]:
             img = preprocess(image, 1024, "cuda")
         else:
             raise NotImplementedError

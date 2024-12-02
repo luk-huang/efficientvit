@@ -14,6 +14,7 @@ from applications.efficientvit_sam.helpers.utils import (
     get_available_models,
 )
 from applications.efficientvit_sam.helpers.process_prompts import process_boxes, process_full_img, process_points, process_points_and_boxes
+from applications.efficientvit_sam.helpers.measure_throughput_trt import process_throughput
 
 examples = [
     [{"image": "assets/fig/bear.jpeg", "points": [[]]}],
@@ -161,6 +162,77 @@ def build_automatic_segmentation_tab(runtime):
     return full_img_segmentation
 
 
+def build_image_dataset_dropdown():
+    # Define available datasets
+    datasets = {
+        "COCO 2017 (5000 Images)": "dataset/coco/val2017",
+    }
+    
+    dataset_choices = list(datasets.keys())
+    default_dataset = "COCO 2017 (5000 Images)"
+
+    dropdown = gr.Dropdown(
+        choices=dataset_choices,
+        value=default_dataset,
+        label="Select Image Dataset",
+        info="Choose a dataset to use for throughput measurement.",
+    )
+
+    return dropdown, datasets
+
+def build_throughput_measurement_tab(runtime):
+    image_dataset_dropdown, datasets = build_image_dataset_dropdown()
+
+    output_text = gr.Textbox(label = "Throughput Measurement Results",
+                             interactive=False,
+                             lines = 10)
+
+    with gr.Blocks() as throughput_tab:
+        with gr.Row(equal_height = False):
+            with gr.Column():
+                with gr.Column(variant = "panel"):
+                    model_dropdown = build_model_dropdown(runtime)
+
+                    image_dataset_dropdown.render()
+
+                    num_iterations = gr.Number(
+                        value = 1000, 
+                        label = "Number of Images to Process", 
+                        interactive=True,
+                        precision = 0
+                    )
+
+                    batch_size_dropdown = gr.Dropdown(
+                        choices=[4, 16],
+                        value=4,
+                        label="Batch Size",
+                        info="Choose the batch size for throughput measurement"
+                    )
+
+                    prompt_type_dropdown = gr.Dropdown(
+                        choices=["point", "box"],
+                        value="point",
+                        label="Prompt Type",
+                        info="Choose the prompt type for throughput measurement"
+                    )
+
+                    measure_button = gr.Button("Measure Throughput")
+                    
+                    measure_button.click(
+                        lambda model, dataset, iterations, batch_size, prompt_type: process_throughput(
+                            model, datasets[dataset], iterations, batch_size, prompt_type, runtime
+                        ),
+                        inputs=[model_dropdown, image_dataset_dropdown, num_iterations, batch_size_dropdown, prompt_type_dropdown],
+                        outputs=output_text,
+                    )
+
+                
+            with gr.Column():
+                with gr.Column(variant = "panel"):
+                    output_text.render()
+       
+    return throughput_tab
+
 def build_demo(runtime):
     point_label = "Click to add point(s)"
     point_segmentation = build_promptable_segmentation_tab(PointPromptableImage, point_label, process_points, runtime)
@@ -174,6 +246,8 @@ def build_demo(runtime):
     )
 
     full_img_segmentation = build_automatic_segmentation_tab(runtime)
+
+    throughput_tab = build_throughput_measurement_tab(runtime)
 
     with gr.Blocks(theme=gr.themes.Base()) as demo:
         title_formatting = "<center><strong><font size='8'>EfficientViT-SAM</font></strong></center>"
@@ -203,12 +277,17 @@ def build_demo(runtime):
         gr.Markdown(description)
 
         gr.TabbedInterface(
-            interface_list=[point_segmentation, box_segmentation, point_and_box_segmentation, full_img_segmentation],
+            interface_list=[point_segmentation, 
+                            box_segmentation, 
+                            point_and_box_segmentation, 
+                            full_img_segmentation,
+                            throughput_tab],
             tab_names=[
                 "Point segmentation mode",
                 "Box segmentation mode",
                 "Mixed point and box segmentation mode",
                 "Full image automatic segmentation mode",
+                "Throughput Measurement"
             ],
         )
 

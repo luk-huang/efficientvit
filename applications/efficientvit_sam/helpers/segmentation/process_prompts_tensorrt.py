@@ -22,12 +22,19 @@ except Exception as e:
     pass
 
 
-DIR = "assets/export_models/sam/tensorrt"
+DIR = "assets/export_models/efficientvit_sam/tensorrt"
 get_encoder_path = lambda model_name: f"{DIR}/{model_name}_encoder.engine"
-get_point_decoder_path = lambda model_name: f"{DIR}/{model_name}_point_decoder.engine"
-get_box_decoder_path = lambda model_name: f"{DIR}/{model_name}_box_decoder.engine"
-get_point_and_box_decoder_path = lambda model_name: f"{DIR}/{model_name}_point_decoder.engine"
-get_full_img_decoder_path = lambda model_name: f"{DIR}/{model_name}_full_img_decoder.engine"
+get_decoder_path = lambda model_name: f"{DIR}/{model_name}_decoder.engine"
+
+get_point_decoder_path = get_decoder_path
+get_box_decoder_path = get_decoder_path
+get_point_and_box_decoder_path = get_decoder_path
+get_full_img_decoder_path = get_decoder_path
+
+#get_point_decoder_path = lambda model_name: f"{DIR}/{model_name}_point_decoder.engine"
+#get_box_decoder_path = lambda model_name: f"{DIR}/{model_name}_box_decoder.engine"
+#get_point_and_box_decoder_path = lambda model_name: f"{DIR}/{model_name}_point_decoder.engine"
+#get_full_img_decoder_path = lambda model_name: f"{DIR}/{model_name}_full_img_decoder.engine"
 
 
 def segment_using_points_tensorrt(prompt_dict, model_name):
