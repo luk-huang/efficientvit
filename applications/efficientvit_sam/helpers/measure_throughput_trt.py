@@ -93,7 +93,11 @@ def measure_throughput_trt(trt_encoder, trt_decoder, image_paths, batch_size, mo
                             device=device,
                         )
 
-                        box_label = np.array([[2, 3] for _ in range(boxes.shape[0])], dtype=np.float32).reshape((-1, 2))
+                        box_label = torch.tensor(
+                            [[2, 3] for _ in range(boxes.shape[0])], 
+                            dtype=torch.float32, 
+                            device=device
+                        ).reshape(-1, 2)
 
                         point_coords = boxes
                         point_labels = box_label

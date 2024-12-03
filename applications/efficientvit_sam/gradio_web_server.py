@@ -186,6 +186,12 @@ def build_throughput_measurement_tab(runtime):
     output_text = gr.Textbox(label = "Throughput Measurement Results",
                              interactive=False,
                              lines = 10)
+    
+    def update_batch_size_options(model_name):
+        # BS 4 only avaialable for l models currently due TRT export crashing before BS 16 can be exported
+        if model_name in ["efficientvit-sam-xl1", "efficientvit-sam-xl0"]:
+            return gr.update(choices=[4], value=4)
+        return gr.update(choices=[4, 16], value=4)
 
     with gr.Blocks() as throughput_tab:
         with gr.Row(equal_height = False):
@@ -201,12 +207,19 @@ def build_throughput_measurement_tab(runtime):
                         interactive=True,
                         precision = 0
                     )
-
+                    
                     batch_size_dropdown = gr.Dropdown(
-                        choices=[4, 16],
+                        choices=[4],
                         value=4,
                         label="Batch Size",
-                        info="Choose the batch size for throughput measurement"
+                        info="Choose the batch size for throughput measurement",
+                        interactive=True
+                    )
+
+                    model_dropdown.change(
+                        fn=update_batch_size_options,
+                        inputs=model_dropdown,
+                        outputs=[batch_size_dropdown]
                     )
 
                     prompt_type_dropdown = gr.Dropdown(
