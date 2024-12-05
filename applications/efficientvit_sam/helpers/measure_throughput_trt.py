@@ -13,6 +13,7 @@ from applications.efficientvit_sam.helpers.predictors.effvit_sam_tensorrt import
 DIR = "assets/export_models/efficientvit_sam/tensorrt"
 get_encoder_path = lambda model_name: f"{DIR}/{model_name}_encoder.engine"
 get_decoder_path = lambda model_name: f"{DIR}/{model_name}_decoder.engine"
+get_encoder_fp16_path = lambda model_name: f"{DIR}/{model_name}_encoder_fp16.engine"
 
 def measure_throughput_trt(trt_encoder, trt_decoder, image_paths, batch_size, model, prompt_type = "point"):
     device = "cuda"
@@ -33,8 +34,6 @@ def measure_throughput_trt(trt_encoder, trt_decoder, image_paths, batch_size, mo
             raw_sam_img = image_array
             origin_image_size = raw_sam_img.shape[:2]
             origin_image_sizes.append(origin_image_size)
-
-            print(model)
             if model in ["efficientvit-sam-l0", "efficientvit-sam-l1", "efficientvit-sam-l2"]:
                 sam_image = preprocess(raw_sam_img, img_size=512, device="cpu")
             elif model in ["efficientvit-sam-xl0", "efficientvit-sam-xl1"]:
@@ -148,10 +147,16 @@ def measure_throughput_trt(trt_encoder, trt_decoder, image_paths, batch_size, mo
     total_avg_latency = f"Average Latency: {avg_latency:.2f} ms"
     return total_throughput + " \n" + total_encoder_throughput + " \n" + total_decoder_throughput + " \n" + total_avg_latency
 
-def process_throughput(model, dataset, iterations, batch_size, prompt_type, runtime):
+def process_throughput(model, dataset, iterations, batch_size, prompt_type, weight_precision, runtime):
     if runtime == TENSORRT:
-        trt_encoder = get_encoder_engine(get_encoder_path(model))
-        trt_decoder = get_decoder_engine(get_decoder_path(model))
+        if weight_precision == "FP32":
+            trt_encoder = get_encoder_engine(get_encoder_path(model))
+            trt_decoder = get_decoder_engine(get_decoder_path(model))
+        elif weight_precision == "FP16":
+            trt_encoder = get_encoder_engine(get_encoder_fp16_path(model))
+            trt_decoder = get_decoder_engine(get_decoder_path(model))
+        else:
+            raise NotImplementedError
 
         # List all image paths
         image_paths = []

@@ -70,10 +70,14 @@ def run_export(
     weight_url: str,
     output: str,
     opset: int,
+    fp16_enabled: bool = False,
 ) -> None:
     print("Loading model...")
     efficientvit_sam = create_efficientvit_sam_model(model, True, weight_url).eval()
-
+    
+    if fp16_enabled:
+        efficientvit_sam = efficientvit_sam.half()
+    
     onnx_model = EncoderOnnxModel(model=efficientvit_sam)
 
     if model in ["efficientvit-sam-l0", "efficientvit-sam-l1", "efficientvit-sam-l2"]:
@@ -83,10 +87,16 @@ def run_export(
     else:
         raise NotImplementedError
 
-    dummy_input = {"input_image": torch.randn((1, 3, image_size[0], image_size[1]), dtype=torch.float)}
-    dynamic_axes = {
-        "input_image": {0: "batch_size"},
-    }
+    if fp16_enabled:
+        dummy_input = {"input_image": torch.randn((1, 3, image_size[0], image_size[1]), dtype=torch.half)}
+        dynamic_axes = {
+            "input_image": {0: "batch_size"},
+        }
+    else:
+        dummy_input = {"input_image": torch.randn((1, 3, image_size[0], image_size[1]), dtype=torch.float)}
+        dynamic_axes = {
+            "input_image": {0: "batch_size"},
+        }
 
     _ = onnx_model(**dummy_input)
 
@@ -120,6 +130,7 @@ if __name__ == "__main__":
     parser.add_argument("--weight_url", type=str)
     parser.add_argument("--output", type=str, required=True, help="The filename to save the onnx model to.")
     parser.add_argument("--opset", type=int, default=17, help="The ONNX opset version to use. Must be >=11.")
+    parser.add_argument("--fp16", type=bool, default=False, help="Enable true to export model with fp16 weights")
     args = parser.parse_args()
 
     run_export(
